@@ -36,7 +36,7 @@ let optDelayedReponseMs = 0
 let optAutoStopMs = 3600000 // 1 hour
 let gCertPath = `${os.homedir()}/.myCerts`
 
-const gChunkedThreashold = 2048 // chunked transfer for over 2048 bytes
+let gChunkedThreashold = 1_000_000 // 2048 // chunked transfer for over 2048 bytes
 const gChunkSize = 1024
 
 let optInSecure = 0
@@ -49,6 +49,7 @@ function usage(message) {
   if(message) console.error(`[31;1m${message}[m\n`)
   console.error(`usage: ${process.argv[1]} [-n] [-p port] [-H hostname] [-D delayMs] [ servingFolderPath [ configFolderPath ] ]
 	-C: cert folder path (default: ~/.myCerts/)
+	-c: bytes of chunked threshold (default: ${gChunkedThreashold})
 	-D: insert delay as millisec (default: 0 ms)
 	-H: hostname (default: ${gHostName})
 	-l: listen address (default: ${gListenAddress})
@@ -75,6 +76,10 @@ while(process?.argv.length > 2 && process.argv[2].startsWith("-")) {
   } else if(arg === '-n') {
     optInSecure++
     console.warn(`use INSECURE http`)
+  } else if(arg === '-c') {
+    gChunkedThreashold = Number(getNextArgument())
+    if(isNaN(gChunkedThreashold) || gChunkedThreashold < 1)
+      usage(`Error: gChunkedThreashold should be greater than 0 as byte`)
   } else if(arg === '-C') {
     if(! (gCertPath = getNextArgument()))
       usage(`Error: gCertPath not found`)
@@ -110,6 +115,8 @@ const tlsParams = { // TLS options
       || fs.readFileSync(`${gCertPath}/cert.pem`))
 }
 
+// 配列を順にn個づつの配列にする
+// 例: [1,2,3,4,5,6] => [[1,2], [3,4], [5,6]]
 Array.prototype.cons = function(n = 2) {
   return this.reduce((acc, c) => {
     acc.at(-1)?.length < n ? acc.at(-1).push(c) : acc.push([c]) 
