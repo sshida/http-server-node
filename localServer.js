@@ -8,7 +8,7 @@ const http = require('node:http')
 const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
-const {setTimeout} = require(`node:timers/promises`)
+const {setTimeout: setTimeoutPromise} = require(`node:timers/promises`)
 
 const defaultMimeType = 'application/octet-stream'
 const mimeTypes = {
@@ -86,6 +86,7 @@ while(process?.argv.length > 2 && process.argv[2].startsWith("-")) {
       usage(`Error: gCertPath not found`)
   } else if(arg === '-D') {
     if(! Number.isInteger(optDelayedReponseMs = getNextArgument()))
+      optDelayedReponseMs = 0
       usage(`Error: delayed response is not number: ${optDelayedReponseMs}`)
   } else {
     usage("Error: unknown command line option:", arg)
@@ -144,7 +145,7 @@ protocol.createServer(tlsParams, async (request, response) => {
   // insert delay for http response
   if(optDelayedReponseMs) {
     console.warn(`Warn: insert delay: ${optDelayedReponseMs / 1000} s`)
-    await setTimeout(optDelayedReponseMs)
+    await setTimeoutPromise(optDelayedReponseMs)
   }
 
   fs.readFile(filePath, (error, content) => {
